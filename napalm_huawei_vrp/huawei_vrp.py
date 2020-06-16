@@ -21,7 +21,7 @@ Read https://napalm.readthedocs.io for more information.
 
 from napalm.base import NetworkDriver
 import napalm.base.helpers
-from napalm.base.utils import py23_compat
+# from napalm.base.utils import py23_compat
 from napalm.base.netmiko_helpers import netmiko_args
 import napalm.base.constants as c
 from napalm.base.exceptions import (
@@ -116,6 +116,9 @@ class VRPDriver(NetworkDriver):
         self.prompt_quiet_changed = False
         # Track whether 'file prompt quiet' is known to be configured
         self.prompt_quiet_configured = None
+
+        # Disable
+        self.force_no_enable = False
 
     # ok
     def open(self):
@@ -230,10 +233,10 @@ class VRPDriver(NetworkDriver):
         return {
             'uptime': int(uptime),
             'vendor': vendor,
-            'os_version': py23_compat.text_type(os_version),
+            'os_version': str(os_version),
             'serial_number': serial_number,
-            'model': py23_compat.text_type(model),
-            'hostname': py23_compat.text_type(hostname),
+            'model': str(model),
+            'hostname': str(hostname),
             'fqdn': fqdn,  # ? fqdn(fully qualified domain name)
             'interface_list': interface_list
         }
@@ -353,10 +356,10 @@ class VRPDriver(NetworkDriver):
 
         if retrieve.lower() in ('running', 'all'):
             command = 'display current-configuration'
-            config['running'] = py23_compat.text_type(self.device.send_command(command))
+            config['running'] = str(self.device.send_command(command))
         if retrieve.lower() in ('startup', 'all'):
             # command = 'display saved-configuration last'
-            # config['startup'] = py23_compat.text_type(self.device.send_command(command))
+            # config['startup'] = str(self.device.send_command(command))
             pass
         return config
 
@@ -413,7 +416,7 @@ class VRPDriver(NetworkDriver):
                 results_array = []
                 match = re.findall(r"Reply from.+time=(\d+)", output, re.M)
                 for i in match:
-                    results_array.append({'ip_address': py23_compat.text_type(destination),
+                    results_array.append({'ip_address': str(destination),
                                           'rtt': float(i)})
                 ping_dict['success'].update({'results': results_array})
         return ping_dict
@@ -794,8 +797,8 @@ class VRPDriver(NetworkDriver):
                 results[local_intf] = []
 
             neighbor_dict = dict()
-            neighbor_dict['hostname'] = py23_compat.text_type(neighbor[1])
-            neighbor_dict['port'] = py23_compat.text_type(neighbor[2])
+            neighbor_dict['hostname'] = str(neighbor[1])
+            neighbor_dict['port'] = str(neighbor[2])
             results[local_intf].append(neighbor_dict)
         return results
 
@@ -943,10 +946,10 @@ class VRPDriver(NetworkDriver):
         # output = self.device.send_command(command)
 
         snmp_information = {
-            'contact': py23_compat.text_type(''),
-            'location': py23_compat.text_type(''),
+            'contact': str(''),
+            'location': str(''),
             'community': {},
-            'chassis_id': py23_compat.text_type('')
+            'chassis_id': str('')
         }
         return snmp_information
         pass
@@ -1256,7 +1259,7 @@ class VRPDriver(NetworkDriver):
     @staticmethod
     def _create_tmp_file(config):
         tmp_dir = tempfile.gettempdir()
-        rand_fname = py23_compat.text_type(uuid.uuid4())
+        rand_fname = str(uuid.uuid4())
         filename = os.path.join(tmp_dir, rand_fname)
         with open(filename, 'wt') as fobj:
             fobj.write(config)
